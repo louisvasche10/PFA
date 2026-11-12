@@ -13,6 +13,8 @@ public class FirstPersonController : MonoBehaviour
     Vector3 spawnPosition;
     float verticalSpeed;
     float cameraPitch;
+    int lockFrame;
+    public bool IsControlling => enabled && Cursor.lockState == CursorLockMode.Locked && Time.frameCount > lockFrame;
     void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -56,14 +58,25 @@ public class FirstPersonController : MonoBehaviour
         if ((collisions & CollisionFlags.Above) != 0 && verticalSpeed > 0f) verticalSpeed = 0f;
         if (transform.position.y < -20f)
         {
-            controller.enabled = false;
-            transform.position = spawnPosition;
-            controller.enabled = true;
-            verticalSpeed = 0f;
+            PFACombat.PlayerHealth health = GetComponent<PFACombat.PlayerHealth>();
+            if (health != null) health.TakeDamage(1000);
+            else ResetPlayer();
         }
+    }
+    public void ResetPlayer()
+    {
+        controller.enabled = false;
+        transform.position = spawnPosition;
+        transform.rotation = Quaternion.identity;
+        playerCamera.localRotation = Quaternion.identity;
+        controller.enabled = true;
+        verticalSpeed = 0f;
+        cameraPitch = 0f;
+        LockCursor();
     }
     void LockCursor()
     {
+        lockFrame = Time.frameCount;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
